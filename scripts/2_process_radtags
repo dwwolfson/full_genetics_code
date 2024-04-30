@@ -1,0 +1,1 @@
+process_radtags -p /home/wolfs064/stacks/trus/raw/post_trim_stacks_input_second_round -o ./ --renz_1 pstI –renz_2 mspI -c -q
