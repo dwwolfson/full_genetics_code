@@ -1,0 +1,5 @@
+populations -P ~/stacks/trus/stacks.ref/may2024_all_samps_refmap_output/ --popmap ~/stacks/trus/popmaps/comp_popmap_states -O ~/stacks/trus/may2024_output/stacks_filtered -r 0.75 --min-maf 0.05 --write-single-snp --hwe --vcf --phylip-var-all --fstats --genepop --phylip --treemix --verbose --smooth-fstats --smooth-popstats -t 32
+
+# logging to '/home/wolfs064/stacks/trus/may2024_output/stacks_filtered/populations.log'
+
+# locus/sample distributions will be written to '/home/wolfs064/stacks/trus/may2024_output/stacks_filtered/populations.log.distribs'

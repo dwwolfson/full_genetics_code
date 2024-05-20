@@ -1,0 +1,3 @@
+plink --vcf ./populations.snps.vcf --allow-extra-chr --make-bed --double-id --out ld_pruned
+
+plink --bfile ld_pruned --allow-extra-chr --double-id --set-missing-var-ids @:# --indep-pairwise 50 10 0.1 --out ld_pruned

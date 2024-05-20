@@ -1,0 +1,3 @@
+plink --bfile ld_pruned --double-id --allow-extra-chr --set-missing-var-ids @:# --extract ld_pruned.prune.in --make-bed --pca --out ld_pruned
+
+# then can carryout the rest of the tutorial at https://speciationgenomics.github.io/pca/
