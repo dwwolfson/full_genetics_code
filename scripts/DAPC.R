@@ -22,32 +22,64 @@ strata(gen)<-df
 setPop(gen)<-~flyway # set population name to flyway
 
 # k-means to find clusters
-grp<-find.clusters(gen, max.n.clust = 9)
+grp<-find.clusters(gen, max.n.clust = 9) #this took a long time to run
+#saved 200 PCs and a cluster number of 4
+
 #write output to file
 saveRDS(grp, "output/find.cluster_grp.Rda")
 
- dapc(gen, grp$grp)
+my_dapc<-dapc(gen, grp$grp)  #this took a long time to run
+# saved 200 PCs and 3 discriminant functions
+# save to file
+saveRDS(my_dapc, "output/DAPC/dapc_4_clusters.Rda")
  
+
+# amount of variation explained by the 3 discriminant functions
+percent= my_dapc$eig/sum(my_dapc$eig)*100
+barplot(percent, ylab="Percent of genetic variance explained by eigenvectors", 
+        names.arg=round(percent,2))
+
+
+dapc_df<-as.data.frame(my_dapc$ind.coord)
+dapc_df$ID<-row.names(dapc_df) 
+dapc_df<-left_join(dapc_df, pops)
+
+ggplot(dapc_df, aes(x=LD1, y=LD2, fill=flyway))+ geom_point(size=2, pch=21)+
+  labs(x="DPC1 (60.8%)",y="DPC2 (23.9%)", fill="Groups")+
+  theme_pubr()+
+  geom_hline(yintercept=0, linetype="dashed", col="black", linewidth=1)+
+  geom_vline(xintercept=0, linetype="dashed", col="black", linewidth=1)+
+  theme(axis.text.x = element_text(size=14, face="bold"),
+        axis.text.y = element_text(size=14, face="bold"),
+        axis.title.x = element_text(size=14, face="bold"),
+        axis.title.y = element_text(size=14, face="bold"),
+                legend.title = element_text(size=16),
+                legend.text = element_text(size=16))
+
+
+ggsave("figures/dapc_flyways.png",
+       dpi=300)
+
+
+ggsave("figures/dapc_flyways.tiff",
+       dpi=300, compression="lzw")
+
+####################
+ # run again and use the lowest BIC for 2 clusters instead
+grp1<-find.clusters(gen, max.n.clust = 2) 
+# 200 pc's retained and a cluster size of 2
  
- dapc.sub<-dapc(d1, grp$grp)
- # 150 pc's saved and 3 discriminant functions saved
- 
- pdf(file="figures/dapc_5k_loci_150pcs.pdf", width = 8, height = 8)
- scatter(dapc.sub, scree.da=F, bg="white", pch=20, cell=0,
-         cstar=0, solid=0.4, clab=0, cex=3, leg=T,
-         txt.leg = c("High Plains Flock",
-                     "Interior Population",
-                     "Rocky Mountain Population",
-                     "Pacific Population"))
- myInset <- function(){
-   temp <- dapc.sub$pca.eig
-   temp <- 100* cumsum(temp)/sum(temp)
-   plot(temp, col=rep(c("black","lightgrey"),
-                      c(dapc.sub$n.pca,1000)), ylim=c(0,100),
-        xlab="PCA axis", ylab="Cumulated variance (%)",
-        cex=1, pch=20, type="h", lwd=2)
- }
- add.scatter(myInset(), posi="topleft",
-             ratio=.2,
-             bg=transp("white"))
- dev.off()
+# write to file
+saveRDS(grp1, "output/find.cluster_grp_2_groups.Rda")
+
+my_dapc_2_clust<-dapc(gen, grp1$grp) 
+# retained 150 PCs
+# only 1 eigenvalue
+scatter(my_dapc_2_clust)
+assignplot
+
+table(df$flyway, grp1$grp)
+table(df$flyway, grp$grp)
+
+#write to file
+saveRDS(my_dapc_2_clust, "output/dapc_2_clust.Rda")

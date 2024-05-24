@@ -35,3 +35,6 @@ pca_plot<-fviz_pca_ind(pca.swans, label="none", habillage=df$flyway, addEllipses
 
 ggsave("figures/pca.tiff",
        dpi=300, compression="lzw")
+
+ggsave("figures/pca.png",
+       dpi=300)
