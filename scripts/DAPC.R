@@ -34,6 +34,8 @@ my_dapc<-dapc(gen, grp$grp)  #this took a long time to run
 saveRDS(my_dapc, "output/DAPC/dapc_4_clusters.Rda")
  
 
+
+
 # amount of variation explained by the 3 discriminant functions
 percent= my_dapc$eig/sum(my_dapc$eig)*100
 barplot(percent, ylab="Percent of genetic variance explained by eigenvectors", 
@@ -83,3 +85,18 @@ table(df$flyway, grp$grp)
 
 #write to file
 saveRDS(my_dapc_2_clust, "output/dapc_2_clust.Rda")
+
+
+####
+# try 3 cluster to see how it falls out
+grp2<-find.clusters(gen, max.n.clust = 4)
+# chose 150 pcs and 3 clusters
+
+my_dapc3<-dapc(gen, grp2$grp)
+# retained 150 PCs and 2 discriminant functions
+
+# write out to file
+saveRDS(my_dapc3, "output/dapc_3_clust.Rda")
+
+scatter(my_dapc3)
+table(df$flyway, grp2$grp)

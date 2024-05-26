@@ -166,20 +166,31 @@ saveRDS(obj.test, "output/pegas_HW/hw.test.output.Rda")
 
 # now run summary with adegenet on the genind object
 adegenet_summary_flyway<-summary(flyway_genind)
+# I think this isnt' what I want because it gives a stat for each locus?
 
 # write out to file
 saveRDS(adegenet_summary_flyway, "output/Fst_output/adegenet_summary.Rda")
+adegenet_summary_flyway<-readRDS("output/Fst_output/adegenet_summary.Rda")
 
 
 # try hierfstat approach as well to see if numbers agree
-hf_df<-genind2hierfstat(flyway_genind, pop=pops$flyway)
-basic_stat<-basic.stats(hf_df, digits=3)
+fstats_hierf<-basic.stats(flyway_genind, digits=3)
 
 # write to file
-saveRDS(basic_stat, "output")
+saveRDS(fstats_hierf, "output/hierfstat/fstats.Rda")
+
+# Fis
+Fis_flyway<-apply(fstats_hierf$Fis, MARGIN=2, FUN=mean, na.rm=T) %>% 
+  round(digits=2)
+fis_inb<-as.data.frame(fstats_hierf$Fis)
+fis_inb<-reshape2::melt(fis_inb)
+fis_inb %>% 
+  ggplot(aes(x=variable, y=value))+geom_boxplot()
+
+
 
 # Average observed hetero per site
-Ho_flyway<-apply(basic_stat$Ho, MARGIN=2, FUN=mean, na.rm=T) %>% 
+Ho_flyway<-apply(fstats_hierf$Ho, MARGIN=2, FUN=mean, na.rm=T) %>% 
   round(digits=2)
 obs_het<-as.data.frame(basic_stat$Ho)
 obs_het<-reshape2::melt(obs_het)
@@ -187,6 +198,8 @@ obs_het %>%
   ggplot(aes(x=variable, y=value))+geom_boxplot()+ggtitle("Observed Heterozygosity")
 
 # Expected hetero
+He_flyway<-apply(fstats_hierf$Hs, MARGIN=2, FUN=mean, na.rm=T) %>% 
+  round(digits=2)
 exp_het<-as.data.frame(basic_stat$Hs)
 exp_het<-reshape2::melt(exp_het)
 exp_het %>% 
