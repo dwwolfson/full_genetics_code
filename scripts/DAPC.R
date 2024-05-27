@@ -27,14 +27,18 @@ grp<-find.clusters(gen, max.n.clust = 9) #this took a long time to run
 
 #write output to file
 saveRDS(grp, "output/find.cluster_grp.Rda")
+grp<-readRDS("output/find.cluster_grp.Rda")
 
 my_dapc<-dapc(gen, grp$grp)  #this took a long time to run
 # saved 200 PCs and 3 discriminant functions
 # save to file
 saveRDS(my_dapc, "output/DAPC/dapc_4_clusters.Rda")
- 
+my_dapc<-readRDS("output/DAPC/dapc_4_clusters.Rda") 
 
-
+four_clust_dapc<-as.data.frame.matrix(table(df$flyway, grp$grp))
+# write to file
+four_clust_dapc$group<-c("HP", "IP", "PCP", "RMP")
+write_csv(four_clust_dapc, "output/DAPC/four_clust_assignments.csv")
 
 # amount of variation explained by the 3 discriminant functions
 percent= my_dapc$eig/sum(my_dapc$eig)*100
@@ -59,11 +63,11 @@ ggplot(dapc_df, aes(x=LD1, y=LD2, fill=flyway))+ geom_point(size=2, pch=21)+
                 legend.text = element_text(size=16))
 
 
-ggsave("figures/dapc_flyways.png",
+ggsave("figures/multiple_DAPC/dapc_4_clusters.png",
        dpi=300)
 
 
-ggsave("figures/dapc_flyways.tiff",
+ggsave("figures/multiple_DAPC/dapc_4_clusters.tiff",
        dpi=300, compression="lzw")
 
 ####################
@@ -81,11 +85,39 @@ scatter(my_dapc_2_clust)
 assignplot
 
 table(df$flyway, grp1$grp)
-table(df$flyway, grp$grp)
+
 
 #write to file
 saveRDS(my_dapc_2_clust, "output/dapc_2_clust.Rda")
+my_dapc2<-readRDS("output/dapc_2_clust.Rda")
 
+percent= my_dapc2$eig/sum(my_dapc2$eig)*100
+barplot(percent, ylab="Percent of genetic variance explained by eigenvectors", 
+        names.arg=round(percent,2))
+
+dapc_df2<-as.data.frame(my_dapc2$ind.coord)
+dapc_df2$ID<-row.names(dapc_df2) 
+dapc_df2<-left_join(dapc_df2, pops)
+
+ggplot(dapc_df2, aes(x=LD1, fill=flyway))+ geom_density(alpha=0.4)+
+  labs(x="DPC1 (100%)", fill="Groups")+
+  theme_pubr()+
+  geom_hline(yintercept=0, linetype="dashed", col="black", linewidth=1)+
+  geom_vline(xintercept=0, linetype="dashed", col="black", linewidth=1)+
+  theme(axis.text.x = element_text(size=14, face="bold"),
+        axis.text.y = element_text(size=14, face="bold"),
+        axis.title.x = element_text(size=14, face="bold"),
+        axis.title.y = element_text(size=14, face="bold"),
+        legend.title = element_text(size=16),
+        legend.text = element_text(size=16))
+
+# save to file
+ggsave("figures/multiple_DAPC/dapc_2_clusters.png",
+       dpi=300)
+
+
+ggsave("figures/multiple_DAPC/dapc_2_clusters.tiff",
+       dpi=300, compression="lzw")
 
 ####
 # try 3 cluster to see how it falls out
@@ -100,3 +132,31 @@ saveRDS(my_dapc3, "output/dapc_3_clust.Rda")
 
 scatter(my_dapc3)
 table(df$flyway, grp2$grp)
+
+dapc_df3<-as.data.frame(my_dapc3$ind.coord)
+dapc_df3$ID<-row.names(dapc_df3) 
+dapc_df3<-left_join(dapc_df3, pops)
+
+# amount of variation explained by the 3 discriminant functions
+percent= my_dapc3$eig/sum(my_dapc3$eig)*100
+barplot(percent, ylab="Percent of genetic variance explained by eigenvectors", 
+        names.arg=round(percent,2))
+
+dapc3<-ggplot(dapc_df3, aes(x=LD1, y=LD2, fill=flyway))+ geom_point(size=2, pch=21)+
+  labs(x="DPC1 (70.1%)",y="DPC2 (29.9%)", fill="Groups")+
+  theme_pubr()+
+  geom_hline(yintercept=0, linetype="dashed", col="black", linewidth=1)+
+  geom_vline(xintercept=0, linetype="dashed", col="black", linewidth=1)+
+  theme(axis.text.x = element_text(size=14, face="bold"),
+        axis.text.y = element_text(size=14, face="bold"),
+        axis.title.x = element_text(size=14, face="bold"),
+        axis.title.y = element_text(size=14, face="bold"),
+        legend.title = element_text(size=16),
+        legend.text = element_text(size=16))
+
+ggsave("figures/multiple_DAPC/dapc_3_clusters.png",
+       dpi=300)
+
+
+ggsave("figures/multiple_DAPC/dapc_3_clusters.tiff",
+       dpi=300, compression="lzw")

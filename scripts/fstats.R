@@ -9,6 +9,7 @@ library(adegenet)
 library(dartR)
 library(hierfstat)
 library(ggpubr)
+library(reshape2)
 
 # these can been 
 vcfR<-read.vcfR("data/stacks_filtered_pre_LD_prune/populations.snps.vcf")
@@ -89,6 +90,7 @@ ggsave("figures/Fst_pops.tiff",
        compression="lzw", dpi=300, bg="white")
 saveRDS(fst_plot, "output/fst_ggplot.Rdata")
      
+
 # Alternatively, add p-values to the other off-diagonals
 m1<-m
 m1[upper.tri(m1)]<-0  #all p-values were 0
@@ -105,6 +107,9 @@ fst_plot1<-ggplot(data = heat1, aes(x=Var1, y=Var2, fill=value)) +
 
 ggsave("figures/Fst_pvals.png",bg="white",
        dpi=300)
+ggsave("figures/Fst_pvals.tiff",bg="white",
+       dpi=300, compression="lzw")
+
 ################################################################
 
 
@@ -136,7 +141,12 @@ fst_states<-ggplot(data = m1, aes(x=Var1, y=Var2, fill=value)) +
 ggsave("figures/Fst_states.png", bg="white", dpi=300)
 
 
+# show all comparisons between states/provinces
+m_fst<-state_fst$Fsts
 
+bob<-flyway_nei
+colnames(bob)<-rownames(bob)
+heatmap.2(bob, trace="none", dendrogram="row")
 #################################################
  # estimate Fis inbreeding coefficients
 
@@ -179,11 +189,25 @@ fstats_hierf<-basic.stats(flyway_genind, digits=3)
 # write to file
 saveRDS(fstats_hierf, "output/hierfstat/fstats.Rda")
 
+# allelic richness
+all_rich<-allelic.richness(flyway_genind)
+apply(all_rich$Ar, MARGIN=2, FUN=mean, na.rm=T) %>% 
+  round(digits=2)
+ar_df<-as.data.frame(all_rich$Ar) %>% melt
+ar_stats<-ar_df %>% 
+  group_by(variable) %>% 
+  summarize(mean_ar=mean(value, na.rm=T),
+          sd_ar=sd(value, na.rm=T))
+
 # Fis
 Fis_flyway<-apply(fstats_hierf$Fis, MARGIN=2, FUN=mean, na.rm=T) %>% 
   round(digits=2)
 fis_inb<-as.data.frame(fstats_hierf$Fis)
 fis_inb<-reshape2::melt(fis_inb)
+fis_inb<-fis_inb %>% 
+  group_by(variable) %>% 
+  summarize(mean_fis=mean(value, na.rm=T),
+            sd_fis=sd(value, na.rm=T))
 fis_inb %>% 
   ggplot(aes(x=variable, y=value))+geom_boxplot()
 
@@ -192,16 +216,26 @@ fis_inb %>%
 # Average observed hetero per site
 Ho_flyway<-apply(fstats_hierf$Ho, MARGIN=2, FUN=mean, na.rm=T) %>% 
   round(digits=2)
-obs_het<-as.data.frame(basic_stat$Ho)
+obs_het<-as.data.frame(fstats_hierf$Ho)
 obs_het<-reshape2::melt(obs_het)
+obs_het_stats<-obs_het %>% 
+  group_by(variable) %>% 
+  summarize(mean_obs_het=mean(value, na.rm=T),
+            sd_obs_het=sd(value, na.rm=T))
+
 obs_het %>% 
   ggplot(aes(x=variable, y=value))+geom_boxplot()+ggtitle("Observed Heterozygosity")
 
 # Expected hetero
 He_flyway<-apply(fstats_hierf$Hs, MARGIN=2, FUN=mean, na.rm=T) %>% 
   round(digits=2)
-exp_het<-as.data.frame(basic_stat$Hs)
+exp_het<-as.data.frame(fstats_hierf$Hs)
 exp_het<-reshape2::melt(exp_het)
+exp_het_stats<-exp_het %>% 
+  group_by(variable) %>% 
+  summarize(mean_exp_het=mean(value, na.rm=T),
+            sd_exp_het=sd(value, na.rm=T))
+
 exp_het %>% 
   ggplot(aes(x=variable, y=value))+geom_boxplot()+ggtitle("Expected Heterozygosity")
 
@@ -215,9 +249,6 @@ hets %>%
   geom_boxplot()+
   theme_bw()
   
-
-
-
 hetero_plot<-hets %>% 
   ggplot(aes(x=variable, y=value, fill=metric))+
   geom_boxplot()+
@@ -258,25 +289,17 @@ ggadjust_pvalue(p, p.adjust.method="bonferroni")
 #   label = "{p.adj.format}{p.adj.signif}", hide.ns = TRUE
 # )
 
+###############################################################################
+# Put together a table of genetic diversity
 
-# Fis
-Fis_df<-as.data.frame(basic_stat$Fis)
-Fis_df<-reshape2::melt(Fis_df)
-Fis_df %>% 
-  ggplot(aes(x=variable, y=value))+geom_boxplot()+ggtitle("FisInbreeding")
-
-# dartR genetic diversity metrics
-gen<-gl.compliance.check(gen)
-
-dartr_diversity<-gl.report.heterozygosity(
-  gen,
-  method = "pop",
-  plot.out = TRUE,
-  save2tmp = T,
-  verbose = 5
-)
+div_df<-data.frame(group=c("HP", "IP", "PCP", "RMP"))
+div_df$n<-c(15, 134, 44, 31)
+div_df$mean_ar<-ar_stats$mean_ar
+div_df$sd_ar<-ar_stats$sd_ar
+div_df$mean_obs_het<-obs_het_stats$mean_obs_het
+div_df$sd_obs_het<-obs_het_stats$sd_obs_het
+div_df$mean_exp_het<-exp_het_stats$mean_exp_het
+div_df$sd_exp_het<-exp_het_stats$sd_exp_het
 
 # save to file
-write_csv(dartr_diversity, "output/dartR/diversity_metrics.csv")
-
-
+write_csv(div_df, "output/genetic_diversity_table/diversity.csv")
